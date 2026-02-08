@@ -82,7 +82,7 @@ export default function App() {
       nombre_cliente: '',
       objetivo: 'Hipertrofia',
       nivel: 'Moderado',
-      num_dias: 3,
+      num_dias: '',
       dias: []
     }
   });
@@ -90,6 +90,10 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const numDiasSelected = watch('num_dias');
   const { fields, append, remove } = useFieldArray({ control, name: "dias" });
+
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   React.useEffect(() => {
     const current = fields.length;
@@ -139,7 +143,7 @@ export default function App() {
         <header className="text-center mb-12">
             <div className="inline-flex flex-col items-center gap-3 px-8 py-6 bg-gradient-to-br from-zinc-900/80 to-black/60 backdrop-blur-sm rounded-2xl border border-red-900/20 shadow-2xl shadow-red-950/50">
                 <div className="flex items-center gap-4">
-                    <span className="text-6xl">💪</span>
+                    <img src="/img.png" alt="AB Gym Logo" className="w-16 h-16 object-contain" />
                     <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-tight">
                         AB Gym Studio
                     </h1>
@@ -184,6 +188,7 @@ export default function App() {
               <div>
                  <label className={labelStyle}>Frecuencia Semanal</label>
                 <select {...register("num_dias")} className={`${inputDarkStyle} font-bold text-red-500`}>
+                  <option value="">SELECCIONA FRECUENCIA</option>
                   {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} DÍAS DE GUERRA</option>)}
                 </select>
               </div>
@@ -191,12 +196,13 @@ export default function App() {
           </div>
 
           {/* Tarjetas de Días */}
+          {fields.length > 0 && (
           <div className="space-y-6">
             {fields.map((dia, index) => (
                 <div key={dia.id} className="bg-gradient-to-br from-zinc-900/90 to-zinc-950/80 p-8 rounded-2xl border border-zinc-700/30 shadow-2xl shadow-black/30 relative overflow-hidden hover:border-zinc-600/50 transition-all duration-300 group">
                 {/* Marca de agua del BÍCEPS */}
-                <div className="absolute -right-16 -top-16 text-[20rem] text-red-900/5 pointer-events-none transform rotate-12 group-hover:scale-110 group-hover:text-red-900/8 transition-all duration-500">
-                    💪
+                <div className="absolute -right-16 -top-16 pointer-events-none transform rotate-12 group-hover:scale-110 transition-all duration-500 opacity-5 group-hover:opacity-10">
+                    <img src="/img.png" alt="" className="w-80 h-80 object-contain" />
                 </div>
                 <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-red-600 via-red-500 to-red-700 rounded-tl-2xl rounded-bl-2xl"></div>
                 
@@ -227,6 +233,7 @@ export default function App() {
                 </div>
             ))}
           </div>
+          )}
 
           {/* Botón de Envío */}
           <button 

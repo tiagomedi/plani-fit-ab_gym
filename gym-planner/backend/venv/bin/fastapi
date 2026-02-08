@@ -1,4 +1,4 @@
-#!/Users/isamedi/Documents/GitHub/plani-fit-ab_gym/gym-planner/backend/venv/bin/python3
+#!/Users/isamedi/Documents/GitHub/plani-fit-ab_gym/gym-planner/backend/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
