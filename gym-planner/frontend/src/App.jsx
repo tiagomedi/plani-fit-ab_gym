@@ -2,6 +2,9 @@
 import React, { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 
+// Configuración de API: usa variable de entorno en producción, localhost en desarrollo
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 // --- NUEVO ICONO BÍCEPS SVG (Reemplaza al casco) ---
 const BicepsIcon = ({ className }) => (
   // Icono de brazo flexionado (estilo sólido para que se pinte de rojo)
@@ -109,7 +112,7 @@ export default function App() {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
-      const response = await fetch('http://localhost:8000/health', {
+      const response = await fetch(`${API_URL}/health`, {
         signal: controller.signal
       });
       clearTimeout(timeoutId);
@@ -147,7 +150,7 @@ export default function App() {
     };
 
     try {
-      const response = await fetch('http://localhost:8000/generate-pdf', {
+      const response = await fetch(`${API_URL}/generate-pdf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
