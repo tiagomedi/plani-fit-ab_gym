@@ -10,17 +10,53 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from pypdf import PdfWriter, PdfReader
 import io
+import logging
+from datetime import datetime
 
-app = FastAPI()
+# Configurar logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="AB Gym Planner API", version="1.0.0")
 
 # --- CONFIGURACIÓN CORS (CRUCIAL PARA LOCALHOST) ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"], # Puerto por defecto de Vite
+    allow_origins=[
+        "http://localhost:5173",  # Puerto por defecto de Vite
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",  # Alternativo
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- HEALTH CHECK ---
+@app.get("/health")
+async def health_check():
+    """Endpoint para verificar que el servidor está funcionando"""
+    logger.info("Health check solicitado")
+    return {
+        "status": "healthy",
+        "service": "AB Gym Planner API",
+        "timestamp": datetime.now().isoformat(),
+        "version": "1.0.0"
+    }
+
+@app.get("/")
+async def root():
+    """Endpoint raíz con información del API"""
+    return {
+        "message": "AB Gym Planner API está funcionando correctamente",
+        "endpoints": {
+            "health": "/health",
+            "generate_pdf": "/generate-pdf (POST)"
+        }
+    }
 
 # --- MODELOS ---
 class Ejercicio(BaseModel):
@@ -194,16 +230,23 @@ def create_dynamic_pdf(plan: Planificacion, buffer):
 
 @app.post("/generate-pdf")
 async def generate_pdf_endpoint(plan: Planificacion):
+    logger.info(f"📋 Generando PDF para cliente: {plan.nombre_cliente}")
+    logger.info(f"   Objetivo: {plan.objetivo} | Nivel: {plan.nivel} | Días: {len(plan.dias)}")
+    
     try:
         tablas_buffer = io.BytesIO()
+        logger.info("✓ Generando tablas dinámicas...")
         create_dynamic_pdf(plan, tablas_buffer)
         tablas_buffer.seek(0)
 
         try:
+            logger.info("✓ Cargando template estático...")
             reader_template = PdfReader("template_static.pdf")
         except FileNotFoundError:
+            logger.error("❌ No se encontró template_static.pdf")
             return Response(content="Error: Falta template_static.pdf en la carpeta backend", status_code=500)
 
+        logger.info("✓ Combinando PDFs...")
         reader_tablas = PdfReader(tablas_buffer)
         writer = PdfWriter()
 
@@ -217,9 +260,13 @@ async def generate_pdf_endpoint(plan: Planificacion):
 
         output_buffer = io.BytesIO()
         writer.write(output_buffer)
+        
+        logger.info(f"✅ PDF generado exitosamente ({len(output_buffer.getvalue())} bytes)")
         return Response(content=output_buffer.getvalue(), media_type="application/pdf")
+        
     except Exception as e:
         import traceback
-        print(f"ERROR: {str(e)}")
-        print(traceback.format_exc())
+        error_trace = traceback.format_exc()
+        logger.error(f"❌ ERROR al generar PDF: {str(e)}")
+        logger.error(f"Traceback completo:\n{error_trace}")
         return Response(content=f"Error interno: {str(e)}", status_code=500)

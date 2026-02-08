@@ -105,8 +105,39 @@ export default function App() {
     }
   }, [numDiasSelected, append, remove, fields.length]);
 
+  const checkBackendHealth = async () => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const response = await fetch('http://localhost:8000/health', {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
+  };
+
   const onSubmit = async (data) => {
     setIsGenerating(true);
+    
+    // Verificar conexión al backend primero
+    const isBackendRunning = await checkBackendHealth();
+    if (!isBackendRunning) {
+      alert(
+        "❌ ERROR DE CONEXIÓN\n\n" +
+        "El backend no está respondiendo.\n\n" +
+        "SOLUCIÓN:\n" +
+        "1. Abre una terminal\n" +
+        "2. Ve a: gym-planner/backend\n" +
+        "3. Ejecuta: ./start_backend.sh\n\n" +
+        "Si persiste el error, verifica que el puerto 8000 no esté ocupado."
+      );
+      setIsGenerating(false);
+      return;
+    }
+
     const payload = {
       nombre_cliente: data.nombre_cliente,
       objetivo: data.objetivo,
@@ -121,18 +152,34 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+      
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         window.open(url);
       } else {
-        alert("Error en el servidor. Revisa que backend esté corriendo.");
+        const errorText = await response.text();
+        alert(
+          "❌ ERROR DEL SERVIDOR\n\n" +
+          `Estado: ${response.status}\n` +
+          `Detalles: ${errorText}\n\n` +
+          "Verifica los logs del backend en la terminal."
+        );
       }
     } catch (error) {
-      console.error(error);
-      alert("Error de conexión.");
+      console.error('Error completo:', error);
+      alert(
+        "❌ ERROR DE CONEXIÓN\n\n" +
+        "No se pudo conectar con el servidor.\n\n" +
+        "Causas posibles:\n" +
+        "• El backend no está ejecutándose\n" +
+        "• El puerto 8000 está bloqueado\n" +
+        "• Firewall bloqueando la conexión\n\n" +
+        `Error técnico: ${error.message}`
+      );
+    } finally {
+      setIsGenerating(false);
     }
-    setIsGenerating(false);
   };
 
   return (
