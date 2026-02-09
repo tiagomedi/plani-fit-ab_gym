@@ -29,7 +29,7 @@ app.add_middleware(
         "http://localhost:5173",  # Puerto por defecto de Vite
         "http://127.0.0.1:5173",
         "http://localhost:3000",  # Alternativo
-        "https://pagina-static-f1vf.onrender.com",  # Frontend en producción
+        "https://planificacion-rutina.onrender.com",  # Frontend en producción
     ],
     allow_credentials=True,
     allow_methods=["*"],
