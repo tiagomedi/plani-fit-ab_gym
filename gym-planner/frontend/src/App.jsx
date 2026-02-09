@@ -14,8 +14,8 @@ const BicepsIcon = ({ className }) => (
 );
 
 // --- Estilos Reutilizables ---
-const inputDarkStyle = "w-full bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-700/50 text-zinc-100 px-4 py-3 rounded-lg focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all placeholder-zinc-500 hover:border-zinc-600 shadow-sm";
-const labelStyle = "block text-red-400 text-xs font-semibold uppercase tracking-widest mb-2";
+const inputDarkStyle = "w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-3 py-2 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500";
+const labelStyle = "block text-zinc-400 text-xs font-medium mb-1.5";
 
 // --- Subcomponente para la Tabla de Ejercicios ---
 function EjerciciosFieldArray({ nestIndex, control, register }) {
@@ -25,35 +25,35 @@ function EjerciciosFieldArray({ nestIndex, control, register }) {
   });
 
   return (
-    <div className="overflow-x-auto mt-6 bg-gradient-to-br from-zinc-900/60 to-zinc-950/80 rounded-xl border border-zinc-700/30 shadow-lg backdrop-blur-sm">
+    <div className="overflow-x-auto mt-4 bg-zinc-900 rounded-lg border border-zinc-800">
       <table className="min-w-full text-xs text-left text-zinc-300">
-        <thead className="bg-gradient-to-r from-zinc-800 to-zinc-900 border-b border-zinc-700/50">
+        <thead className="bg-zinc-800/50 border-b border-zinc-800">
           <tr>
-            <th className="px-4 py-4 text-left font-semibold text-red-400 uppercase tracking-wider">Ejercicio</th>
-            <th className="px-3 py-4 text-center font-semibold text-red-400 uppercase tracking-wider w-16">Series</th>
-            <th className="px-3 py-4 text-center font-semibold text-red-400 uppercase tracking-wider w-16">Reps</th>
-            <th className="px-3 py-4 text-center font-semibold text-red-400 uppercase tracking-wider w-20">Peso</th>
-            <th className="px-3 py-4 text-center font-semibold text-red-400 uppercase tracking-wider w-24">Intensidad</th>
-            <th className="px-3 py-4 text-center font-semibold text-red-400 uppercase tracking-wider w-20">Pausa</th>
-            <th className="px-3 py-4 text-center font-semibold text-red-400 uppercase tracking-wider w-20">Tempo</th>
-            <th className="px-3 py-4 text-center font-semibold text-red-400 uppercase tracking-wider w-14">RIR</th>
-            <th className="px-3 py-4 w-12"></th>
+            <th className="px-3 py-3 text-left font-medium text-zinc-300">Ejercicio</th>
+            <th className="px-2 py-3 text-center font-medium text-zinc-300 w-16">Series</th>
+            <th className="px-2 py-3 text-center font-medium text-zinc-300 w-16">Reps</th>
+            <th className="px-2 py-3 text-center font-medium text-zinc-300 w-20">Peso</th>
+            <th className="px-2 py-3 text-center font-medium text-zinc-300 w-24">Intensidad</th>
+            <th className="px-2 py-3 text-center font-medium text-zinc-300 w-20">Pausa</th>
+            <th className="px-2 py-3 text-center font-medium text-zinc-300 w-20">Tempo</th>
+            <th className="px-2 py-3 text-center font-medium text-zinc-300 w-14">RIR</th>
+            <th className="px-2 py-3 w-12"></th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-800/30">
+        <tbody className="divide-y divide-zinc-800">
           {fields.map((item, k) => (
-            <tr key={item.id} className="hover:bg-zinc-800/20 transition-colors group">
-              <td className="px-4 py-3"><input {...register(`dias.${nestIndex}.ejercicios.${k}.nombre`)} className="w-full bg-zinc-900/50 border border-zinc-700/30 text-zinc-100 px-3 py-2 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder-zinc-500 text-sm" placeholder="Ej: Press Banca" /></td>
-              <td className="px-2 py-3"><input {...register(`dias.${nestIndex}.ejercicios.${k}.series`)} className="w-full bg-zinc-900/50 border border-zinc-700/30 text-zinc-100 px-3 py-2 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder-zinc-500 text-center text-sm" placeholder="set" /></td>
-              <td className="px-2 py-3"><input {...register(`dias.${nestIndex}.ejercicios.${k}.reps`)} className="w-full bg-zinc-900/50 border border-zinc-700/30 text-zinc-100 px-3 py-2 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder-zinc-500 text-center text-sm" placeholder="rep" /></td>
-              <td className="px-2 py-3"><input {...register(`dias.${nestIndex}.ejercicios.${k}.peso`)} className="w-full bg-zinc-900/50 border border-zinc-700/30 text-zinc-100 px-3 py-2 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder-zinc-500 text-center text-sm" placeholder="Kg" /></td>
-              <td className="px-2 py-3"><input {...register(`dias.${nestIndex}.ejercicios.${k}.intensidad`)} className="w-full bg-zinc-900/50 border border-zinc-700/30 text-zinc-100 px-3 py-2 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder-zinc-500 text-center text-sm" placeholder="%%" /></td>
-              <td className="px-2 py-3"><input {...register(`dias.${nestIndex}.ejercicios.${k}.pausa`)} className="w-full bg-zinc-900/50 border border-zinc-700/30 text-zinc-100 px-3 py-2 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder-zinc-500 text-center text-sm" placeholder="seg" /></td>
-              <td className="px-2 py-3"><input {...register(`dias.${nestIndex}.ejercicios.${k}.tempo`)} className="w-full bg-zinc-900/50 border border-zinc-700/30 text-zinc-100 px-3 py-2 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder-zinc-500 text-center text-sm" placeholder="exenseg" /></td>
-              <td className="px-2 py-3"><input {...register(`dias.${nestIndex}.ejercicios.${k}.rir`)} className="w-full bg-zinc-900/50 border border-zinc-700/30 text-zinc-100 px-3 py-2 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder-zinc-500 text-center text-sm" placeholder="2" /></td>
-              <td className="px-2 py-3 text-center">
-                <button type="button" onClick={() => remove(k)} className="text-zinc-500 hover:text-red-500 hover:bg-red-500/10 transition-all p-2 rounded-lg opacity-0 group-hover:opacity-100">
-                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+            <tr key={item.id} className="hover:bg-zinc-800/30 transition-colors">
+              <td className="px-3 py-2"><input {...register(`dias.${nestIndex}.ejercicios.${k}.nombre`)} className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-2 py-1.5 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500 text-xs" placeholder="Ej: Press Banca" /></td>
+              <td className="px-2 py-2"><input {...register(`dias.${nestIndex}.ejercicios.${k}.series`)} className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-2 py-1.5 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500 text-center text-xs" placeholder="4" /></td>
+              <td className="px-2 py-2"><input {...register(`dias.${nestIndex}.ejercicios.${k}.reps`)} className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-2 py-1.5 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500 text-center text-xs" placeholder="12" /></td>
+              <td className="px-2 py-2"><input {...register(`dias.${nestIndex}.ejercicios.${k}.peso`)} className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-2 py-1.5 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500 text-center text-xs" placeholder="Kg" /></td>
+              <td className="px-2 py-2"><input {...register(`dias.${nestIndex}.ejercicios.${k}.intensidad`)} className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-2 py-1.5 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500 text-center text-xs" placeholder="80%" /></td>
+              <td className="px-2 py-2"><input {...register(`dias.${nestIndex}.ejercicios.${k}.pausa`)} className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-2 py-1.5 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500 text-center text-xs" placeholder="140s" /></td>
+              <td className="px-2 py-2"><input {...register(`dias.${nestIndex}.ejercicios.${k}.tempo`)} className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-2 py-1.5 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500 text-center text-xs" placeholder="2s" /></td>
+              <td className="px-2 py-2"><input {...register(`dias.${nestIndex}.ejercicios.${k}.rir`)} className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-2 py-1.5 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500 text-center text-xs" placeholder="2" /></td>
+              <td className="px-2 py-2 text-center">
+                <button type="button" onClick={() => remove(k)} className="text-zinc-500 hover:text-red-500 transition-colors p-1 rounded">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -62,13 +62,13 @@ function EjerciciosFieldArray({ nestIndex, control, register }) {
           ))}
         </tbody>
       </table>
-      <div className="p-4 border-t border-zinc-800/30">
+      <div className="p-3 border-t border-zinc-800">
         <button 
             type="button" 
             onClick={() => append({ nombre: '', series: '', reps: '', peso: '', intensidad: '', pausa: '', tempo: '', rir: '' })}
-            className="w-full flex items-center justify-center gap-2 text-sm text-red-400 font-semibold uppercase tracking-wider hover:text-red-300 transition-all px-5 py-3 rounded-lg border border-red-500/30 hover:border-red-500/50 hover:bg-red-500/10 group"
+            className="w-full flex items-center justify-center gap-2 text-sm text-zinc-300 hover:text-white transition-colors px-4 py-2 rounded border border-zinc-800 hover:bg-zinc-800/50"
         >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
             Añadir Ejercicio
@@ -186,45 +186,49 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/20 via-zinc-950 to-zinc-950 py-8 px-4 text-zinc-200">
-      <div className="max-w-[90rem] mx-auto">
+    <div className="min-h-screen py-8 px-4 text-zinc-200 relative">
+      {/* Fondo estático */}
+      <div 
+        className="fixed inset-0 -z-10"
+        style={{ 
+          backgroundImage: 'url(/fondo.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundColor: '#09090b'
+        }}
+      />
+      {/* Overlay oscuro para mejorar legibilidad */}
+      <div className="fixed inset-0 bg-zinc-950/70 -z-10" />
+      <div className="max-w-7xl mx-auto relative z-10">
         
         {/* HEADER */}
-        <header className="text-center mb-12">
-            <div className="inline-flex flex-col items-center gap-3 px-8 py-6 bg-gradient-to-br from-zinc-900/80 to-black/60 backdrop-blur-sm rounded-2xl border border-red-900/20 shadow-2xl shadow-red-950/50">
-                <div className="flex items-center gap-4">
-                    <img src="/img.png" alt="AB Gym Logo" className="w-16 h-16 object-contain" />
-                    <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-tight">
-                        AB Gym Studio
-                    </h1>
-                </div>
-                <div className="h-0.5 w-32 bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
-                <p className="text-red-400 font-semibold tracking-[0.25em] text-xs uppercase">Sistema de Planificación Profesional</p>
+        <header className="mb-8">
+            <div className="flex items-center gap-4 pb-6 border-b border-zinc-800">
+                <img src="/img.png" alt="AB Gym Logo" className="w-12 h-12 object-contain" />
+                <h1 className="text-2xl font-semibold text-zinc-100">
+                    Planificación Rutina Profesional
+                </h1>
             </div>
         </header>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           
           {/* Panel de Datos */}
-          <div className="bg-gradient-to-br from-zinc-900/90 to-black/80 backdrop-blur-xl p-8 rounded-2xl border border-zinc-700/30 shadow-2xl shadow-black/50">
-            <div className="flex items-center gap-3 mb-8">
-                <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-red-600 to-red-700 rounded-lg shadow-lg shadow-red-900/50">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-white">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                    </svg>
-                </div>
-                <h2 className="text-2xl font-bold text-white uppercase tracking-tight">
+          <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800">
+            <div className="mb-6">
+                <h2 className="text-lg font-medium text-zinc-100">
                     Información del Atleta
                 </h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className={labelStyle}>Nombre Cliente</label>
                 <input {...register("nombre_cliente")} placeholder="Ej: Leónidas" className={inputDarkStyle} required />
               </div>
               <div>
                 <label className={labelStyle}>Objetivo Principal</label>
-                <input {...register("objetivo")} placeholder="Ej: Hipertrofia / Fuerza" className={inputDarkStyle} />
+                <input {...register("objetivo")} placeholder="Ej: Hipertrofia" className={inputDarkStyle} />
               </div>
               <div>
                 <label className={labelStyle}>Nivel de Experiencia</label>
@@ -237,9 +241,9 @@ export default function App() {
               </div>
               <div>
                  <label className={labelStyle}>Frecuencia Semanal</label>
-                <select {...register("num_dias")} className={`${inputDarkStyle} font-bold text-red-500`}>
-                  <option value="">SELECCIONA FRECUENCIA</option>
-                  {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} DÍAS DE GUERRA</option>)}
+                <select {...register("num_dias")} className={inputDarkStyle}>
+                  <option value="">Seleccionar</option>
+                  {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} días</option>)}
                 </select>
               </div>
             </div>
@@ -247,35 +251,26 @@ export default function App() {
 
           {/* Tarjetas de Días */}
           {fields.length > 0 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {fields.map((dia, index) => (
-                <div key={dia.id} className="bg-gradient-to-br from-zinc-900/90 to-zinc-950/80 p-8 rounded-2xl border border-zinc-700/30 shadow-2xl shadow-black/30 relative overflow-hidden hover:border-zinc-600/50 transition-all duration-300 group">
-                {/* Marca de agua del BÍCEPS */}
-                <div className="absolute -right-16 -top-16 pointer-events-none transform rotate-12 group-hover:scale-110 transition-all duration-500 opacity-5 group-hover:opacity-10">
-                    <img src="/img.png" alt="" className="w-80 h-80 object-contain" />
-                </div>
-                <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-red-600 via-red-500 to-red-700 rounded-tl-2xl rounded-bl-2xl"></div>
+                <div key={dia.id} className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800">
                 
-                <div className="flex flex-col md:flex-row gap-6 mb-6 relative z-10">
+                <div className="flex flex-col md:flex-row gap-4 mb-4">
                     <div className="w-full md:w-1/3">
                         <label className={labelStyle}>Día de la Semana</label>
-                        <div className="relative">
-                            <input 
-                                {...register(`dias.${index}.nombre_dia`)} 
-                                className="w-full bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-700/50 text-zinc-100 px-4 py-3 rounded-lg focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all placeholder-zinc-500 hover:border-zinc-600 shadow-sm font-bold text-lg" 
-                                placeholder="Ej: Lunes"
-                            />
-                        </div>
+                        <input 
+                            {...register(`dias.${index}.nombre_dia`)} 
+                            className={inputDarkStyle} 
+                            placeholder="Ej: Lunes"
+                        />
                     </div>
                     <div className="w-full md:w-2/3">
                         <label className={labelStyle}>Enfoque Muscular</label>
-                        <div className="relative">
-                            <input 
-                                {...register(`dias.${index}.grupo_muscular`)} 
-                                placeholder="Ej: Pectoral, Deltoides y Tríceps" 
-                                className="w-full bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-700/50 text-zinc-100 px-4 py-3 rounded-lg focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all placeholder-zinc-500 hover:border-zinc-600 shadow-sm" 
-                            />
-                        </div>
+                        <input 
+                            {...register(`dias.${index}.grupo_muscular`)} 
+                            placeholder="Ej: Pectoral, Deltoides" 
+                            className={inputDarkStyle} 
+                        />
                     </div>
                 </div>
                 
@@ -289,23 +284,23 @@ export default function App() {
           <button 
             type="submit" 
             disabled={isGenerating}
-            className="w-full bg-gradient-to-r from-red-600 via-red-500 to-red-700 text-white font-black uppercase tracking-[0.2em] py-6 rounded-2xl shadow-2xl shadow-red-900/50 hover:shadow-red-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-xl relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-600"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></div>
-            <span className="relative z-10 flex items-center justify-center gap-3">
+            <span className="flex items-center justify-center gap-2">
                 {isGenerating ? (
                     <>
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Forjando Planificación...
+                        Generando PDF...
                     </>
                 ) : (
                     <>
-                        {/* Reemplazo aquí */}
-                        <BicepsIcon className="w-8 h-8" />
-                        DESCARGAR PLAN DE BATALLA
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                        Descargar Planificación
                     </>
                 )}
             </span>
