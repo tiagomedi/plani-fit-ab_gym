@@ -1,17 +1,9 @@
 // frontend/src/App.jsx
 import React, { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
-
-// Configuración de API: usa variable de entorno en producción, localhost en desarrollo
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
-// --- NUEVO ICONO BÍCEPS SVG (Reemplaza al casco) ---
-const BicepsIcon = ({ className }) => (
-  // Icono de brazo flexionado (estilo sólido para que se pinte de rojo)
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M15.75 1.5a1.125 1.125 0 00-1.125 1.125v.351A2.625 2.625 0 0012 5.625c0 1.021.585 1.914 1.444 2.353a2.625 2.625 0 101.306 5.109V16.5h-3v-4.125a2.625 2.625 0 10-5.25 0V16.5H3.375A1.125 1.125 0 002.25 17.625v3.75c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.75a1.125 1.125 0 00-1.125-1.125H17.25v-3.387a2.625 2.625 0 101.454-5.129 2.625 2.625 0 101.306-5.109c.859-.439 1.444-1.332 1.444-2.353a2.625 2.625 0 00-2.625-2.625v-.351c0-.621-.504-1.125-1.125-1.125h-1.954z" />
-  </svg>
-);
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { PDFDocument } from 'pdf-lib';
 
 // --- Estilos Reutilizables ---
 const inputDarkStyle = "w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-3 py-2 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500";
@@ -63,8 +55,8 @@ function EjerciciosFieldArray({ nestIndex, control, register }) {
         </tbody>
       </table>
       <div className="p-3 border-t border-zinc-800">
-        <button 
-            type="button" 
+        <button
+            type="button"
             onClick={() => append({ nombre: '', series: '', reps: '', peso: '', intensidad: '', pausa: '', tempo: '', rir: '' })}
             className="w-full flex items-center justify-center gap-2 text-sm text-zinc-300 hover:text-white transition-colors px-4 py-2 rounded border border-zinc-800 hover:bg-zinc-800/50"
         >
@@ -76,6 +68,137 @@ function EjerciciosFieldArray({ nestIndex, control, register }) {
       </div>
     </div>
   );
+}
+
+// --- Generación de PDF en el cliente ---
+async function generarPDF(plan) {
+  // Colores (RGB)
+  const RED = [220, 38, 38];
+  const DARK = [24, 24, 27];
+  const GRAY_LIGHT = [244, 244, 245];
+  const GRAY_DARK = [82, 82, 91];
+  const TEXT = [39, 39, 42];
+  const WHITE = [255, 255, 255];
+
+  const tablasPdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  plan.dias.forEach((dia, idx) => {
+    if (idx > 0) tablasPdf.addPage();
+
+    let y = 20;
+
+    // Título del día
+    tablasPdf.setFont('helvetica', 'bold');
+    tablasPdf.setFontSize(16);
+    tablasPdf.setTextColor(...RED);
+    tablasPdf.text(dia.nombre_dia.toUpperCase(), 15, y);
+    y += 8;
+
+    // Subtítulo grupo muscular
+    tablasPdf.setFont('helvetica', 'italic');
+    tablasPdf.setFontSize(11);
+    tablasPdf.setTextColor(...GRAY_DARK);
+    tablasPdf.text(dia.grupo_muscular || '', 15, y);
+    y += 10;
+
+    // Tabla de info del atleta
+    autoTable(tablasPdf, {
+      startY: y,
+      body: [
+        ['ATLETA:', plan.nombre_cliente, 'OBJETIVO:', plan.objetivo],
+        ['NIVEL:', plan.nivel, 'FRECUENCIA:', plan.frecuencia],
+      ],
+      columnStyles: {
+        0: { fontStyle: 'bold', halign: 'right', fillColor: GRAY_LIGHT, textColor: TEXT, cellWidth: 25 },
+        1: { halign: 'left', textColor: TEXT, cellWidth: 70 },
+        2: { fontStyle: 'bold', halign: 'right', fillColor: GRAY_LIGHT, textColor: TEXT, cellWidth: 28 },
+        3: { halign: 'left', textColor: TEXT, cellWidth: 70 },
+      },
+      styles: { fontSize: 9, cellPadding: 3 },
+      theme: 'plain',
+      tableLineColor: GRAY_DARK,
+      tableLineWidth: 0.3,
+    });
+
+    y = tablasPdf.lastAutoTable.finalY + 8;
+
+    // Tabla de ejercicios
+    const headers = [['EJERCICIO', 'SERIES', 'REPS', 'PESO (Kg)', 'INTENSIDAD (%)', 'PAUSA (seg)', 'TEMPO', 'RIR']];
+    const rows = dia.ejercicios.map(ej => [
+      ej.nombre,
+      ej.series,
+      ej.reps,
+      ej.peso || '-',
+      ej.intensidad,
+      ej.pausa,
+      ej.tempo,
+      ej.rir,
+    ]);
+
+    autoTable(tablasPdf, {
+      startY: y,
+      head: headers,
+      body: rows,
+      headStyles: {
+        fillColor: RED,
+        textColor: WHITE,
+        fontStyle: 'bold',
+        fontSize: 9,
+        halign: 'center',
+        valign: 'middle',
+      },
+      bodyStyles: {
+        fontSize: 8,
+        textColor: TEXT,
+        valign: 'middle',
+      },
+      alternateRowStyles: { fillColor: GRAY_LIGHT },
+      columnStyles: {
+        0: { fontStyle: 'bold', halign: 'left', cellWidth: 55 },
+        1: { halign: 'center', cellWidth: 17 },
+        2: { halign: 'center', cellWidth: 14 },
+        3: { halign: 'center', cellWidth: 18 },
+        4: { halign: 'center', cellWidth: 23 },
+        5: { halign: 'center', cellWidth: 21 },
+        6: { halign: 'center', cellWidth: 21 },
+        7: { halign: 'center', cellWidth: 12 },
+      },
+      tableLineColor: DARK,
+      tableLineWidth: 0.4,
+      styles: { cellPadding: { top: 3, bottom: 3, left: 2, right: 2 } },
+      theme: 'grid',
+    });
+  });
+
+  // Intentar combinar con template_static.pdf
+  try {
+    const templateRes = await fetch('/template_static.pdf');
+    if (!templateRes.ok) throw new Error('template not found');
+    const templateBytes = await templateRes.arrayBuffer();
+    const tablasBytes = tablasPdf.output('arraybuffer');
+
+    const mergedDoc = await PDFDocument.create();
+    const templateDoc = await PDFDocument.load(templateBytes);
+    const tablasDoc = await PDFDocument.load(tablasBytes);
+
+    // Copiar las primeras 2 páginas del template
+    const templatePages = templateDoc.getPages();
+    const pagesToCopy = Math.min(2, templatePages.length);
+    const copiedTemplate = await mergedDoc.copyPages(templateDoc, [...Array(pagesToCopy).keys()]);
+    copiedTemplate.forEach(p => mergedDoc.addPage(p));
+
+    // Copiar todas las páginas de tablas
+    const tablasPages = tablasDoc.getPageCount();
+    const copiedTablas = await mergedDoc.copyPages(tablasDoc, [...Array(tablasPages).keys()]);
+    copiedTablas.forEach(p => mergedDoc.addPage(p));
+
+    const finalBytes = await mergedDoc.save();
+    return new Blob([finalBytes], { type: 'application/pdf' });
+  } catch {
+    // Si no hay template, devolver solo las tablas
+    const bytes = tablasPdf.output('arraybuffer');
+    return new Blob([bytes], { type: 'application/pdf' });
+  }
 }
 
 // --- Componente Principal ---
@@ -109,36 +232,11 @@ export default function App() {
     }
   }, [numDiasSelected, append, remove, fields.length]);
 
-  const checkBackendHealth = async () => {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      const response = await fetch(`${API_URL}/health`, {
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      return response.ok;
-    } catch (error) {
-      return false;
-    }
-  };
-
   const onSubmit = async (data) => {
     setIsGenerating(true);
     setErrorMsg(null);
 
-    // Verificar conexión al backend primero
-    const isBackendRunning = await checkBackendHealth();
-    if (!isBackendRunning) {
-      setErrorMsg({
-        title: "Servicio no disponible",
-        body: "El servidor de generación de PDFs no está respondiendo en este momento. Por favor, intenta de nuevo en unos minutos. Si el problema persiste, contacta al administrador."
-      });
-      setIsGenerating(false);
-      return;
-    }
-
-    const payload = {
+    const plan = {
       nombre_cliente: data.nombre_cliente,
       objetivo: data.objetivo,
       nivel: data.nivel,
@@ -147,37 +245,23 @@ export default function App() {
     };
 
     try {
-      const response = await fetch(`${API_URL}/generate-pdf`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const nombreArchivo = data.nombre_cliente
-          ? `planificacion_${data.nombre_cliente.replace(/\s+/g, '_')}.pdf`
-          : 'planificacion.pdf';
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = nombreArchivo;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      } else {
-        const errorText = await response.text();
-        setErrorMsg({
-          title: `Error del servidor (${response.status})`,
-          body: errorText || "Ocurrió un error al generar el PDF. Por favor, intenta de nuevo."
-        });
-      }
+      const blob = await generarPDF(plan);
+      const url = window.URL.createObjectURL(blob);
+      const nombreArchivo = data.nombre_cliente
+        ? `planificacion_${data.nombre_cliente.replace(/\s+/g, '_')}.pdf`
+        : 'planificacion.pdf';
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = nombreArchivo;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error completo:', error);
+      console.error('Error al generar PDF:', error);
       setErrorMsg({
-        title: "Error de conexión",
-        body: "No se pudo conectar con el servidor. Verifica tu conexión a internet e intenta de nuevo."
+        title: "Error al generar el PDF",
+        body: "Ocurrió un error al generar el PDF. Por favor, intenta de nuevo."
       });
     } finally {
       setIsGenerating(false);
@@ -187,9 +271,9 @@ export default function App() {
   return (
     <div className="min-h-screen py-8 px-4 text-zinc-200 relative">
       {/* Fondo estático */}
-      <div 
+      <div
         className="fixed inset-0 -z-10"
-        style={{ 
+        style={{
           backgroundImage: 'url(/fondo.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -200,7 +284,7 @@ export default function App() {
       {/* Overlay oscuro para mejorar legibilidad */}
       <div className="fixed inset-0 bg-zinc-950/70 -z-10" />
       <div className="max-w-7xl mx-auto relative z-10">
-        
+
         {/* HEADER */}
         <header className="mb-8">
             <div className="flex items-center gap-4 pb-6 border-b border-zinc-800">
@@ -210,9 +294,9 @@ export default function App() {
                 </h1>
             </div>
         </header>
-        
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          
+
           {/* Panel de Datos */}
           <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800">
             <div className="mb-6">
@@ -253,26 +337,26 @@ export default function App() {
           <div className="space-y-4">
             {fields.map((dia, index) => (
                 <div key={dia.id} className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800">
-                
+
                 <div className="flex flex-col md:flex-row gap-4 mb-4">
                     <div className="w-full md:w-1/3">
                         <label className={labelStyle}>Día de la Semana</label>
-                        <input 
-                            {...register(`dias.${index}.nombre_dia`)} 
-                            className={inputDarkStyle} 
+                        <input
+                            {...register(`dias.${index}.nombre_dia`)}
+                            className={inputDarkStyle}
                             placeholder="Ej: Lunes"
                         />
                     </div>
                     <div className="w-full md:w-2/3">
                         <label className={labelStyle}>Enfoque Muscular</label>
-                        <input 
-                            {...register(`dias.${index}.grupo_muscular`)} 
-                            placeholder="Ej: Pectoral, Deltoides" 
-                            className={inputDarkStyle} 
+                        <input
+                            {...register(`dias.${index}.grupo_muscular`)}
+                            placeholder="Ej: Pectoral, Deltoides"
+                            className={inputDarkStyle}
                         />
                     </div>
                 </div>
-                
+
                 <EjerciciosFieldArray nestIndex={index} control={control} register={register} />
                 </div>
             ))}
@@ -303,7 +387,7 @@ export default function App() {
 
           {/* Botón de Envío */}
           <button
-            type="submit" 
+            type="submit"
             disabled={isGenerating}
             className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-600"
           >
@@ -331,9 +415,9 @@ export default function App() {
 
       {/* Footer */}
       <footer className="fixed bottom-6 right-6 z-20">
-        <a 
-          href="https://santiagom.vercel.app/" 
-          target="_blank" 
+        <a
+          href="https://santiagom.vercel.app/"
+          target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 px-4 py-2 bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 rounded-full text-xs text-zinc-400 hover:text-white hover:border-red-500 transition-all duration-300 shadow-lg hover:shadow-red-500/20"
         >
