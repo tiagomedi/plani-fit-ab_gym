@@ -91,6 +91,7 @@ export default function App() {
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null);
   const numDiasSelected = watch('num_dias');
   const { fields, append, remove } = useFieldArray({ control, name: "dias" });
 
@@ -124,19 +125,15 @@ export default function App() {
 
   const onSubmit = async (data) => {
     setIsGenerating(true);
-    
+    setErrorMsg(null);
+
     // Verificar conexión al backend primero
     const isBackendRunning = await checkBackendHealth();
     if (!isBackendRunning) {
-      alert(
-        "❌ ERROR DE CONEXIÓN\n\n" +
-        "El backend no está respondiendo.\n\n" +
-        "SOLUCIÓN:\n" +
-        "1. Abre una terminal\n" +
-        "2. Ve a: gym-planner/backend\n" +
-        "3. Ejecuta: ./start_backend.sh\n\n" +
-        "Si persiste el error, verifica que el puerto 8000 no esté ocupado."
-      );
+      setErrorMsg({
+        title: "Servicio no disponible",
+        body: "El servidor de generación de PDFs no está respondiendo en este momento. Por favor, intenta de nuevo en unos minutos. Si el problema persiste, contacta al administrador."
+      });
       setIsGenerating(false);
       return;
     }
@@ -155,31 +152,33 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      
+
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        window.open(url);
+        const nombreArchivo = data.nombre_cliente
+          ? `planificacion_${data.nombre_cliente.replace(/\s+/g, '_')}.pdf`
+          : 'planificacion.pdf';
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nombreArchivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
       } else {
         const errorText = await response.text();
-        alert(
-          "❌ ERROR DEL SERVIDOR\n\n" +
-          `Estado: ${response.status}\n` +
-          `Detalles: ${errorText}\n\n` +
-          "Verifica los logs del backend en la terminal."
-        );
+        setErrorMsg({
+          title: `Error del servidor (${response.status})`,
+          body: errorText || "Ocurrió un error al generar el PDF. Por favor, intenta de nuevo."
+        });
       }
     } catch (error) {
       console.error('Error completo:', error);
-      alert(
-        "❌ ERROR DE CONEXIÓN\n\n" +
-        "No se pudo conectar con el servidor.\n\n" +
-        "Causas posibles:\n" +
-        "• El backend no está ejecutándose\n" +
-        "• El puerto 8000 está bloqueado\n" +
-        "• Firewall bloqueando la conexión\n\n" +
-        `Error técnico: ${error.message}`
-      );
+      setErrorMsg({
+        title: "Error de conexión",
+        body: "No se pudo conectar con el servidor. Verifica tu conexión a internet e intenta de nuevo."
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -280,8 +279,30 @@ export default function App() {
           </div>
           )}
 
+          {/* Error inline */}
+          {errorMsg && (
+            <div className="bg-red-950/60 border border-red-800 rounded-lg p-4 flex items-start gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-red-400 mt-0.5 shrink-0">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              <div className="flex-1 min-w-0">
+                <p className="text-red-300 font-medium text-sm">{errorMsg.title}</p>
+                <p className="text-red-400 text-xs mt-1">{errorMsg.body}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorMsg(null)}
+                className="text-red-600 hover:text-red-400 transition-colors shrink-0"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* Botón de Envío */}
-          <button 
+          <button
             type="submit" 
             disabled={isGenerating}
             className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-600"
