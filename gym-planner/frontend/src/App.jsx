@@ -416,7 +416,7 @@ export default function App() {
       {/* Footer */}
       <footer className="fixed bottom-6 right-6 z-20">
         <a
-          href="https://santiagom.vercel.app/"
+          href="https://ismedina.vercel.app/"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 px-4 py-2 bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 rounded-full text-xs text-zinc-400 hover:text-white hover:border-red-500 transition-all duration-300 shadow-lg hover:shadow-red-500/20"
