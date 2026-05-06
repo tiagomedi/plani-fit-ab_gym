@@ -1,6 +1,7 @@
 # Automatización Creación PLanificación Rutina GYM 
 
-Es una aplicación web fullstack para la creación y gestión profesional de rutinas de entrenamiento en gimnasio. 
-Ideal para entrenadores personales, gimnasios y atletas que buscan una herramienta profesional para documentar y seguir sus programas de entrenamiento.
+Desarrollo de una solución integral para la digitalización de servicios de entrenamiento, optimizando el flujo de trabajo administrativo mediante la automatización de la creación y gestión de rutinas personalizadas.
+
+Implementación de una API de alto rendimiento con Python y FastAPI sobre Uvicorn, integrando un motor de generación dinámica de documentos PDF con Reportlab para la entrega inmediata de planes técnicos.
 
 ![Plantilla Plani ABGYM](plani-abgym.png)
