@@ -1,10 +1,9 @@
 // frontend/src/App.jsx
 import React, { useState, useCallback } from 'react';
 import { useForm, useFieldArray, useController } from 'react-hook-form';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { PDFDocument } from 'pdf-lib';
 import { supabase } from './supabase';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // --- Estilos Reutilizables ---
 const inputDarkStyle = "w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-3 py-2 rounded focus:outline-none focus:bg-zinc-900 focus:border-red-500 placeholder-zinc-500";
@@ -336,130 +335,22 @@ function AlumnosPanel({ alumnos, loading, dbDisabled, onCargar, onEliminar }) {
   );
 }
 
-// --- Generación de PDF en el cliente ---
-async function generarPDF(plan) {
-  const RED = [220, 38, 38];
-  const DARK = [24, 24, 27];
-  const GRAY_LIGHT = [244, 244, 245];
-  const GRAY_DARK = [82, 82, 91];
-  const TEXT = [39, 39, 42];
-  const WHITE = [255, 255, 255];
-
-  const tablasPdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-  plan.dias.forEach((dia, idx) => {
-    if (idx > 0) tablasPdf.addPage();
-
-    let y = 20;
-
-    tablasPdf.setFont('helvetica', 'bold');
-    tablasPdf.setFontSize(16);
-    tablasPdf.setTextColor(...RED);
-    tablasPdf.text(dia.nombre_dia.toUpperCase(), 15, y);
-    y += 8;
-
-    tablasPdf.setFont('helvetica', 'italic');
-    tablasPdf.setFontSize(11);
-    tablasPdf.setTextColor(...GRAY_DARK);
-    tablasPdf.text(dia.grupo_muscular || '', 15, y);
-    y += 10;
-
-    autoTable(tablasPdf, {
-      startY: y,
-      body: [
-        ['ATLETA:', plan.nombre_cliente, 'OBJETIVO:', plan.objetivo],
-        ['NIVEL:', plan.nivel, 'FRECUENCIA:', plan.frecuencia],
-      ],
-      columnStyles: {
-        0: { fontStyle: 'bold', halign: 'right', fillColor: GRAY_LIGHT, textColor: TEXT, cellWidth: 25 },
-        1: { halign: 'left', textColor: TEXT, cellWidth: 70 },
-        2: { fontStyle: 'bold', halign: 'right', fillColor: GRAY_LIGHT, textColor: TEXT, cellWidth: 28 },
-        3: { halign: 'left', textColor: TEXT, cellWidth: 70 },
-      },
-      styles: { fontSize: 9, cellPadding: 3 },
-      theme: 'plain',
-      tableLineColor: GRAY_DARK,
-      tableLineWidth: 0.3,
-    });
-
-    y = tablasPdf.lastAutoTable.finalY + 8;
-
-    const headers = [['EJERCICIO', 'SERIES', 'REPS', 'PESO (Kg)', 'INTENSIDAD (%)', 'PAUSA (seg)', 'TEMPO', 'RIR']];
-    const rows = dia.ejercicios.map(ej => [
-      ej.nombre,
-      ej.series,
-      ej.reps,
-      ej.peso || '-',
-      ej.intensidad,
-      ej.pausa,
-      ej.tempo,
-      ej.rir,
-    ]);
-
-    autoTable(tablasPdf, {
-      startY: y,
-      head: headers,
-      body: rows,
-      headStyles: {
-        fillColor: RED,
-        textColor: WHITE,
-        fontStyle: 'bold',
-        fontSize: 9,
-        halign: 'center',
-        valign: 'middle',
-      },
-      bodyStyles: {
-        fontSize: 8,
-        textColor: TEXT,
-        valign: 'middle',
-      },
-      alternateRowStyles: { fillColor: GRAY_LIGHT },
-      columnStyles: {
-        0: { fontStyle: 'bold', halign: 'left', cellWidth: 55 },
-        1: { halign: 'center', cellWidth: 17 },
-        2: { halign: 'center', cellWidth: 14 },
-        3: { halign: 'center', cellWidth: 18 },
-        4: { halign: 'center', cellWidth: 23 },
-        5: { halign: 'center', cellWidth: 21 },
-        6: { halign: 'center', cellWidth: 21 },
-        7: { halign: 'center', cellWidth: 12 },
-      },
-      tableLineColor: DARK,
-      tableLineWidth: 0.4,
-      styles: { cellPadding: { top: 3, bottom: 3, left: 2, right: 2 } },
-      theme: 'grid',
-    });
+// --- Generación de Excel (via backend) ---
+async function generarExcel(plan) {
+  const res = await fetch(`${API_URL}/generate-xlsx`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(plan),
   });
-
-  try {
-    const templateRes = await fetch('/template_static.pdf');
-    if (!templateRes.ok) throw new Error('template not found');
-    const templateBytes = await templateRes.arrayBuffer();
-    const tablasBytes = tablasPdf.output('arraybuffer');
-
-    const mergedDoc = await PDFDocument.create();
-    const templateDoc = await PDFDocument.load(templateBytes);
-    const tablasDoc = await PDFDocument.load(tablasBytes);
-
-    const templatePages = templateDoc.getPages();
-    const pagesToCopy = Math.min(2, templatePages.length);
-    const copiedTemplate = await mergedDoc.copyPages(templateDoc, [...Array(pagesToCopy).keys()]);
-    copiedTemplate.forEach(p => mergedDoc.addPage(p));
-
-    const tablasPages = tablasDoc.getPageCount();
-    const copiedTablas = await mergedDoc.copyPages(tablasDoc, [...Array(tablasPages).keys()]);
-    copiedTablas.forEach(p => mergedDoc.addPage(p));
-
-    const finalBytes = await mergedDoc.save();
-    return new Blob([finalBytes], { type: 'application/pdf' });
-  } catch {
-    const bytes = tablasPdf.output('arraybuffer');
-    return new Blob([bytes], { type: 'application/pdf' });
+  if (!res.ok) {
+    const msg = await res.text();
+    throw new Error(msg || 'Error al generar el Excel');
   }
+  return res.blob();
 }
 
 // --- Componente Principal ---
-export default function App() {
+export default function App({ onLogout }) {
   const { register, control, handleSubmit, watch, reset, getValues } = useForm({
     defaultValues: {
       nombre_cliente: '',
@@ -594,11 +485,11 @@ export default function App() {
     };
 
     try {
-      const blob = await generarPDF(plan);
+      const blob = await generarExcel(plan);
       const url = window.URL.createObjectURL(blob);
       const nombreArchivo = data.nombre_cliente
-        ? `planificacion_${data.nombre_cliente.replace(/\s+/g, '_')}.pdf`
-        : 'planificacion.pdf';
+        ? `planificacion_${data.nombre_cliente.replace(/\s+/g, '_')}.xlsx`
+        : 'planificacion.xlsx';
       const a = document.createElement('a');
       a.href = url;
       a.download = nombreArchivo;
@@ -607,10 +498,10 @@ export default function App() {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error al generar PDF:', error);
+      console.error('Error al generar Excel:', error);
       setErrorMsg({
-        title: "Error al generar el PDF",
-        body: "Ocurrió un error al generar el PDF. Por favor, intenta de nuevo."
+        title: "Error al generar el Excel",
+        body: "Ocurrió un error al generar el Excel. Asegurate de que el servidor esté corriendo."
       });
     } finally {
       setIsGenerating(false);
@@ -637,9 +528,22 @@ export default function App() {
       <header className="shrink-0 border-b border-zinc-800 bg-zinc-950/60 backdrop-blur-sm z-10">
         <div className="flex items-center gap-3 px-5 py-3">
           <img src="/img.png" alt="AB Gym Logo" className="w-9 h-9 object-contain" />
-          <h1 className="text-base font-semibold text-zinc-100 leading-tight">
+          <h1 className="text-base font-semibold text-zinc-100 leading-tight flex-1">
             Planificación Rutina Profesional
           </h1>
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              title="Cerrar sesión"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors text-xs"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H2.25" />
+              </svg>
+              Salir
+            </button>
+          )}
         </div>
       </header>
 
@@ -817,7 +721,7 @@ export default function App() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Generando PDF...
+                    Generando Excel...
                   </>
                 ) : (
                   <>

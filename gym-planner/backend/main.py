@@ -2,60 +2,50 @@ from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, PageBreak, Spacer, Paragraph
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
-from pypdf import PdfWriter, PdfReader
+from openpyxl import load_workbook
+from openpyxl.cell import MergedCell
+from copy import deepcopy
 import io
 import logging
 from datetime import datetime
 
-# Configurar logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="AB Gym Planner API", version="1.0.0")
+app = FastAPI(title="AB Gym Planner API", version="2.0.0")
 
-# --- CONFIGURACIÓN CORS (CRUCIAL PARA LOCALHOST) ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",  # Puerto por defecto de Vite
+        "http://localhost:5173",
         "http://127.0.0.1:5173",
-        "http://localhost:3000",  # Alternativo
-        "https://planificacion-rutina.onrender.com",  # Frontend en producción
+        "http://localhost:3000",
+        "https://planificacion-rutina.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- HEALTH CHECK ---
 @app.get("/health")
 async def health_check():
-    """Endpoint para verificar que el servidor está funcionando"""
-    logger.info("Health check solicitado")
     return {
         "status": "healthy",
         "service": "AB Gym Planner API",
         "timestamp": datetime.now().isoformat(),
-        "version": "1.0.0"
+        "version": "2.0.0"
     }
 
 @app.get("/")
 async def root():
-    """Endpoint raíz con información del API"""
     return {
-        "message": "AB Gym Planner API está funcionando correctamente",
+        "message": "AB Gym Planner API funcionando",
         "endpoints": {
             "health": "/health",
-            "generate_pdf": "/generate-pdf (POST)"
+            "generate_xlsx": "/generate-xlsx (POST)"
         }
     }
 
@@ -82,192 +72,128 @@ class Planificacion(BaseModel):
     frecuencia: str
     dias: List[DiaEntrenamiento]
 
-# --- LÓGICA PDF ---
-def create_dynamic_pdf(plan: Planificacion, buffer):
-    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
-    elements = []
-    
-    # Colores personalizados profesionales
-    color_primario = colors.HexColor('#DC2626')  # Rojo
-    color_secundario = colors.HexColor('#18181B')  # Negro zinc
-    color_gris_claro = colors.HexColor('#F4F4F5')  # Gris claro
-    color_gris_oscuro = colors.HexColor('#52525B')  # Gris oscuro
-    color_texto = colors.HexColor('#27272A')  # Texto oscuro
-    
-    # Estilos
-    styles = getSampleStyleSheet()
-    titulo_dia_style = ParagraphStyle(
-        'TituloDia',
-        parent=styles['Heading1'],
-        fontSize=16,
-        textColor=color_primario,
-        spaceAfter=12,
-        fontName='Helvetica-Bold',
-        alignment=TA_LEFT
-    )
-    
-    subtitulo_style = ParagraphStyle(
-        'Subtitulo',
-        parent=styles['Normal'],
-        fontSize=11,
-        textColor=color_gris_oscuro,
-        spaceAfter=20,
-        fontName='Helvetica',
-        alignment=TA_LEFT
-    )
+# --- CONSTANTES DE LA PLANTILLA ---
+TEMPLATE_PATH = "PLANTILLA_EXCEL.xlsx"
+BLOCK_SIZE = 14          # filas por bloque de día
+# Filas de inicio de cada bloque pre-hecho (1-indexed)
+BLOCK_STARTS = [2, 16, 30, 44, 58]
+MAX_EXERCISES = 11       # filas de ejercicios por bloque
 
-    for idx, dia in enumerate(plan.dias):
-        # Título del día con borde decorativo
-        titulo_dia = Paragraph(f"<b>{dia.nombre_dia.upper()}</b>", titulo_dia_style)
-        elements.append(titulo_dia)
-        
-        # Subtítulo con grupo muscular
-        subtitulo = Paragraph(f"<i>{dia.grupo_muscular}</i>", subtitulo_style)
-        elements.append(subtitulo)
-        
-        # Información del cliente en una tabla compacta y elegante
-        info_data = [
-            ["ATLETA:", plan.nombre_cliente, "OBJETIVO:", plan.objetivo],
-            ["NIVEL:", plan.nivel, "FRECUENCIA:", plan.frecuencia]
-        ]
-        
-        info_table = Table(info_data, colWidths=[60, 180, 70, 180])
-        info_table.setStyle(TableStyle([
-            # Fondo alternado elegante
-            ('BACKGROUND', (0, 0), (0, -1), color_gris_claro),
-            ('BACKGROUND', (2, 0), (2, -1), color_gris_claro),
-            
-            # Texto
-            ('TEXTCOLOR', (0, 0), (-1, -1), color_texto),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTNAME', (3, 0), (3, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            
-            # Alineación
-            ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
-            ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
-            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-            ('ALIGN', (3, 0), (3, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            
-            # Padding
-            ('LEFTPADDING', (0, 0), (-1, -1), 8),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            
-            # Bordes sutiles
-            ('BOX', (0, 0), (-1, -1), 1, color_gris_oscuro),
-            ('LINEBELOW', (0, 0), (-1, 0), 1, color_gris_oscuro),
-        ]))
-        elements.append(info_table)
-        elements.append(Spacer(1, 20))
+# Columnas (1-indexed)
+COL_EJERCICIO = 2    # B
+COL_TIPO = 3         # C  (tempo)
+COL_INTENSIDAD = 4   # D
+COL_PAUSA_GEN = 5    # E  (Tiemp.Desc)
+# Columna PESO de cada semana; SERIES=+1, REPS=+2, DESCANSO=+3, RIR=+4
+SEMANA_PESO_COLS = [7, 13, 19, 25]  # G, M, S, Y
 
-        # Tabla de ejercicios con diseño profesional
-        ejercicio_headers = ["EJERCICIO", "SERIES", "REPS", "PESO\n(Kg)", "INTENSIDAD\n(%)", "PAUSA\n(seg)", "TEMPO", "RIR"]
-        data = [ejercicio_headers]
-        
-        for ej in dia.ejercicios:
-            data.append([
-                ej.nombre,
-                ej.series,
-                ej.reps,
-                ej.peso if ej.peso else "-",
-                ej.intensidad,
-                ej.pausa,
-                ej.tempo,
-                ej.rir
-            ])
 
-        # Anchos optimizados para mejor legibilidad
-        col_widths = [150, 45, 45, 45, 55, 55, 55, 35]
-        t_body = Table(data, colWidths=col_widths, repeatRows=1)
-        
-        t_body.setStyle(TableStyle([
-            # Encabezado con diseño impactante
-            ('BACKGROUND', (0, 0), (-1, 0), color_primario),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 9),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
-            
-            # Filas de datos con fondo alternado
-            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, color_gris_claro]),
-            
-            # Texto del cuerpo
-            ('TEXTCOLOR', (0, 1), (-1, -1), color_texto),
-            ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),  # Nombre del ejercicio en bold
-            ('FONTNAME', (1, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 8),
-            
-            # Alineación
-            ('ALIGN', (0, 1), (0, -1), 'LEFT'),  # Ejercicio a la izquierda
-            ('ALIGN', (1, 1), (-1, -1), 'CENTER'),  # Resto centrado
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            
-            # Padding para mejor legibilidad
-            ('LEFTPADDING', (0, 0), (-1, -1), 6),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-            
-            # Bordes profesionales
-            ('BOX', (0, 0), (-1, -1), 1.5, color_secundario),
-            ('LINEBELOW', (0, 0), (-1, 0), 2, color_secundario),
-            ('INNERGRID', (0, 0), (-1, -1), 0.5, color_gris_oscuro),
-        ]))
-        
-        elements.append(t_body)
-        
-        # Agregar PageBreak solo si no es el último día
-        if idx < len(plan.dias) - 1:
-            elements.append(PageBreak())
+def copy_block_style(ws, src_start: int, dst_start: int):
+    """Copia el formato de un bloque existente a uno nuevo."""
+    row_offset = dst_start - src_start
 
-    doc.build(elements)
+    # Alturas de fila
+    for r in range(BLOCK_SIZE):
+        src_r = src_start + r
+        dst_r = dst_start + r
+        if src_r in ws.row_dimensions:
+            ws.row_dimensions[dst_r].height = ws.row_dimensions[src_r].height
 
-@app.post("/generate-pdf")
-async def generate_pdf_endpoint(plan: Planificacion):
-    logger.info(f"📋 Generando PDF para cliente: {plan.nombre_cliente}")
-    logger.info(f"   Objetivo: {plan.objetivo} | Nivel: {plan.nivel} | Días: {len(plan.dias)}")
-    
+    # Celdas fusionadas
+    merges = [
+        (mc.min_row, mc.min_col, mc.max_row, mc.max_col)
+        for mc in ws.merged_cells.ranges
+        if src_start <= mc.min_row <= src_start + BLOCK_SIZE - 1
+    ]
+    for min_row, min_col, max_row, max_col in merges:
+        ws.merge_cells(
+            start_row=min_row + row_offset,
+            start_column=min_col,
+            end_row=max_row + row_offset,
+            end_column=max_col,
+        )
+
+    # Estilos y valores de cabecera
+    for r in range(BLOCK_SIZE):
+        for c in range(1, 30):
+            src = ws.cell(row=src_start + r, column=c)
+            dst = ws.cell(row=dst_start + r, column=c)
+            if isinstance(src, MergedCell) or isinstance(dst, MergedCell):
+                continue
+            if src.font:      dst.font      = deepcopy(src.font)
+            if src.fill:      dst.fill      = deepcopy(src.fill)
+            if src.border:    dst.border    = deepcopy(src.border)
+            if src.alignment: dst.alignment = deepcopy(src.alignment)
+            dst.number_format = src.number_format
+            # Copiar texto de las filas de semana y cabecera (offsets 1 y 2)
+            if r in (1, 2):
+                dst.value = src.value
+
+
+def fill_day_block(ws, block_start: int, dia: DiaEntrenamiento):
+    """Rellena un bloque de día con los datos del plan."""
+    title = f"{dia.nombre_dia.upper()} | {dia.grupo_muscular.upper()}"
+    ws.cell(row=block_start, column=COL_EJERCICIO).value = title
+
+    for i, ej in enumerate(dia.ejercicios[:MAX_EXERCISES]):
+        row = block_start + 3 + i
+        ws.cell(row=row, column=COL_EJERCICIO).value   = ej.nombre
+        ws.cell(row=row, column=COL_TIPO).value        = ej.tempo or ""
+        ws.cell(row=row, column=COL_INTENSIDAD).value  = ej.intensidad or ""
+        ws.cell(row=row, column=COL_PAUSA_GEN).value   = ej.pausa or ""
+
+        peso = ej.peso if ej.peso else "-"
+        for sc in SEMANA_PESO_COLS:
+            ws.cell(row=row, column=sc).value     = peso
+            ws.cell(row=row, column=sc + 1).value = ej.series or ""
+            ws.cell(row=row, column=sc + 2).value = ej.reps or ""
+            ws.cell(row=row, column=sc + 3).value = ej.pausa or ""
+            ws.cell(row=row, column=sc + 4).value = ej.rir or ""
+
+
+def create_xlsx(plan: Planificacion) -> bytes:
+    wb = load_workbook(TEMPLATE_PATH)
+    ws = wb["Hoja1"]
+
+    for day_idx, dia in enumerate(plan.dias):
+        if day_idx < len(BLOCK_STARTS):
+            block_start = BLOCK_STARTS[day_idx]
+        else:
+            # Crear bloque extra copiando el formato del último bloque de la plantilla
+            extra = day_idx - len(BLOCK_STARTS) + 1
+            block_start = BLOCK_STARTS[-1] + extra * BLOCK_SIZE
+            copy_block_style(ws, BLOCK_STARTS[-1], block_start)
+
+        fill_day_block(ws, block_start, dia)
+
+    # Eliminar los bloques de la plantilla que no fueron utilizados
+    n_days = len(plan.dias)
+    if n_days < len(BLOCK_STARTS):
+        first_unused_row = BLOCK_STARTS[n_days]
+        rows_to_delete = (len(BLOCK_STARTS) - n_days) * BLOCK_SIZE
+        ws.delete_rows(first_unused_row, rows_to_delete)
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
+
+
+@app.post("/generate-xlsx")
+async def generate_xlsx_endpoint(plan: Planificacion):
+    logger.info(f"📋 Generando Excel para: {plan.nombre_cliente} — {len(plan.dias)} días")
     try:
-        tablas_buffer = io.BytesIO()
-        logger.info("✓ Generando tablas dinámicas...")
-        create_dynamic_pdf(plan, tablas_buffer)
-        tablas_buffer.seek(0)
-
-        try:
-            logger.info("✓ Cargando template estático...")
-            reader_template = PdfReader("template_static.pdf")
-        except FileNotFoundError:
-            logger.error("❌ No se encontró template_static.pdf")
-            return Response(content="Error: Falta template_static.pdf en la carpeta backend", status_code=500)
-
-        logger.info("✓ Combinando PDFs...")
-        reader_tablas = PdfReader(tablas_buffer)
-        writer = PdfWriter()
-
-        # Copiar páginas del template (1 y 2)
-        for i in range(min(2, len(reader_template.pages))):
-            writer.add_page(reader_template.pages[i])
-
-        # Agregar tablas generadas
-        for page in reader_tablas.pages:
-            writer.add_page(page)
-
-        output_buffer = io.BytesIO()
-        writer.write(output_buffer)
-        
-        logger.info(f"✅ PDF generado exitosamente ({len(output_buffer.getvalue())} bytes)")
-        return Response(content=output_buffer.getvalue(), media_type="application/pdf")
-        
+        xlsx_bytes = create_xlsx(plan)
+        safe_name = plan.nombre_cliente.replace(" ", "_")
+        logger.info(f"✅ Excel generado ({len(xlsx_bytes)} bytes)")
+        return Response(
+            content=xlsx_bytes,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": f'attachment; filename="planificacion_{safe_name}.xlsx"'
+            },
+        )
     except Exception as e:
         import traceback
-        error_trace = traceback.format_exc()
-        logger.error(f"❌ ERROR al generar PDF: {str(e)}")
-        logger.error(f"Traceback completo:\n{error_trace}")
+        logger.error(f"❌ Error al generar Excel: {e}\n{traceback.format_exc()}")
         return Response(content=f"Error interno: {str(e)}", status_code=500)

@@ -1,4 +1,4 @@
-#!/Users/isamedi/Documents/GitHub/plani-fit-ab_gym/gym-planner/backend/venv/bin/python3
+#!/Users/isamedi/Documents/GitHub/plani-fit-ab_gym/gym-planner/backend/venv/bin/python3.14
 import sys
 from uvicorn.main import main
 if __name__ == '__main__':
