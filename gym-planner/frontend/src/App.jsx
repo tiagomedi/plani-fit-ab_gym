@@ -850,7 +850,7 @@ export default function App() {
                     <label className="block text-zinc-500 text-xs mb-1">Día de la Semana</label>
                     <input
                       {...register(`dias.${index}.nombre_dia`)}
-                      className="bg-transparent text-zinc-100 text-sm font-semibold focus:outline-none placeholder-zinc-600 w-full"
+                      className="bg-transparent focus:bg-zinc-800/60 text-zinc-100 text-sm font-semibold focus:outline-none placeholder-zinc-600 w-full rounded px-1 -mx-1 transition-colors"
                       placeholder="Ej: Lunes"
                     />
                   </div>
@@ -859,7 +859,7 @@ export default function App() {
                     <input
                       {...register(`dias.${index}.grupo_muscular`)}
                       placeholder="Ej: Pectoral, Deltoides"
-                      className="bg-transparent text-zinc-300 text-sm focus:outline-none placeholder-zinc-600 w-full"
+                      className="bg-transparent focus:bg-zinc-800/60 text-zinc-300 text-sm focus:outline-none placeholder-zinc-600 w-full rounded px-1 -mx-1 transition-colors"
                     />
                   </div>
                 </div>
