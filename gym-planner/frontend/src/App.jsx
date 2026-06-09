@@ -7,11 +7,11 @@ import { PDFDocument } from 'pdf-lib';
 import { supabase } from './supabase';
 
 // --- Estilos Reutilizables ---
-const inputDarkStyle = "w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-3 py-2 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500";
+const inputDarkStyle = "w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-3 py-2 rounded focus:outline-none focus:bg-zinc-900 focus:border-red-500 placeholder-zinc-500";
 const labelStyle = "block text-zinc-400 text-xs font-medium mb-1.5";
 
-const selectCellStyle = "w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-1.5 py-1.5 rounded focus:outline-none focus:border-red-500 text-center text-xs cursor-pointer";
-const inputCellStyle  = "w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-2 py-1.5 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500 text-center text-xs";
+const selectCellStyle = "w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-1.5 py-1.5 rounded focus:outline-none focus:bg-zinc-900 focus:border-red-500 text-center text-xs cursor-pointer";
+const inputCellStyle  = "w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-2 py-1.5 rounded focus:outline-none focus:bg-zinc-900 focus:border-red-500 placeholder-zinc-500 text-center text-xs";
 
 // --- Input de Tempo: tres números editables separados por guiones fijos ---
 function TempoInput({ name, control }) {
@@ -25,7 +25,7 @@ function TempoInput({ name, control }) {
     field.onChange(next.join('-'));
   };
 
-  const tinyInput = "w-7 bg-zinc-900 border border-zinc-800 text-zinc-100 text-center text-xs py-1.5 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500";
+  const tinyInput = "w-7 bg-zinc-900 border border-zinc-800 text-zinc-100 text-center text-xs py-1.5 rounded focus:outline-none focus:bg-zinc-900 focus:border-red-500 placeholder-zinc-500";
 
   return (
     <div className="flex items-center justify-center gap-1">
@@ -69,7 +69,7 @@ function EjerciciosFieldArray({ nestIndex, control, register }) {
               <td className="px-3 py-2">
                 <input
                   {...register(`dias.${nestIndex}.ejercicios.${k}.nombre`)}
-                  className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-2 py-1.5 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500 text-xs"
+                  className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-2 py-1.5 rounded focus:outline-none focus:bg-zinc-900 focus:border-red-500 placeholder-zinc-500 text-xs"
                   placeholder="Ej: Press Banca"
                 />
               </td>
@@ -119,7 +119,7 @@ function EjerciciosFieldArray({ nestIndex, control, register }) {
                   <input
                     {...register(`dias.${nestIndex}.ejercicios.${k}.pausa`)}
                     inputMode="numeric"
-                    className="w-14 bg-zinc-900 border border-zinc-800 text-zinc-100 px-2 py-1.5 rounded focus:outline-none focus:border-red-500 placeholder-zinc-500 text-center text-xs"
+                    className="w-14 bg-zinc-900 border border-zinc-800 text-zinc-100 px-2 py-1.5 rounded focus:outline-none focus:bg-zinc-900 focus:border-red-500 placeholder-zinc-500 text-center text-xs"
                     placeholder="0"
                   />
                   <span className="text-zinc-500 text-xs shrink-0">seg</span>
