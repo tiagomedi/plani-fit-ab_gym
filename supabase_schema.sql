@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS alumnos (
   nombre     text        NOT NULL,
   objetivo   text,
   nivel      text,
-  num_dias   smallint,
+  num_dias   text,
   dias       jsonb,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
