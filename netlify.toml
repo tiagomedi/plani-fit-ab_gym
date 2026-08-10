@@ -1,7 +1,22 @@
 [build]
   base = "gym-planner/frontend"
-  command = "npm install && npm run build"
+  command = "npm install && npm run build && npm install --prefix netlify/functions"
   publish = "dist"
+
+[functions]
+  included_files = ["netlify/functions/PLANTILLA_EXCEL.xlsx"]
+
+[dev]
+  command = "npm --prefix gym-planner/frontend run dev"
+  targetPort = 5174
+  port = 8888
+  publish = "dist"
+  framework = "vite"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
 
 [[redirects]]
   from = "/*"

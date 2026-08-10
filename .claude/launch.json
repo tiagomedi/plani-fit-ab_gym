@@ -7,6 +7,13 @@
       "runtimeArgs": ["run", "dev"],
       "port": 5174,
       "cwd": "gym-planner/frontend"
+    },
+    {
+      "name": "netlify-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["netlify-cli", "dev"],
+      "port": 8888,
+      "cwd": "."
     }
   ]
 }

@@ -3,8 +3,6 @@ import React, { useState, useCallback } from 'react';
 import { useForm, useFieldArray, useController } from 'react-hook-form';
 import { supabase } from './supabase';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
 // --- Estilos Reutilizables ---
 const inputDarkStyle = "w-full bg-zinc-900 border border-zinc-800 text-zinc-100 px-3 py-2 rounded focus:outline-none focus:bg-zinc-900 focus:border-red-500 placeholder-zinc-500";
 const labelStyle = "block text-zinc-400 text-xs font-medium mb-1.5";
@@ -335,9 +333,9 @@ function AlumnosPanel({ alumnos, loading, dbDisabled, onCargar, onEliminar }) {
   );
 }
 
-// --- Generación de Excel (via backend) ---
+// --- Generación de Excel (via Netlify Function) ---
 async function generarExcel(plan) {
-  const res = await fetch(`${API_URL}/generate-xlsx`, {
+  const res = await fetch('/api/generate-xlsx', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(plan),
@@ -488,8 +486,8 @@ export default function App() {
       const blob = await generarExcel(plan);
       const url = window.URL.createObjectURL(blob);
       const nombreArchivo = data.nombre_cliente
-        ? `planificacion_${data.nombre_cliente.replace(/\s+/g, '_')}.xlsx`
-        : 'planificacion.xlsx';
+        ? `Planificación_Rutina_${data.nombre_cliente.replace(/\s+/g, '_')}.xlsx`
+        : 'Planificación_Rutina.xlsx';
       const a = document.createElement('a');
       a.href = url;
       a.download = nombreArchivo;
@@ -501,7 +499,7 @@ export default function App() {
       console.error('Error al generar Excel:', error);
       setErrorMsg({
         title: "Error al generar el Excel",
-        body: "Ocurrió un error al generar el Excel. Asegurate de que el servidor esté corriendo."
+        body: error.message || "Ocurrió un error al generar el Excel. Intentá de nuevo en unos segundos."
       });
     } finally {
       setIsGenerating(false);
